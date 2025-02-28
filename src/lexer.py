@@ -1,4 +1,3 @@
-# lexer.py
 import re
 
 token_specs = [
@@ -29,7 +28,7 @@ def tokenize(code):
     return tokens
 
 if __name__ == "__main__":
-    with open("input.layer", "r") as f:
+    with open("../examples/input.layer", "r") as f:
         code = f.read()
     tokens = tokenize(code)
     for token in tokens:
