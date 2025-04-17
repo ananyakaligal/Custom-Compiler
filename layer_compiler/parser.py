@@ -1,11 +1,11 @@
 # parser.py
 
-from lexer import Lexer
-from token_defs import Token
-from ast import (
-    Program, VarDecl, WriteStmt,
-    LoopFor, LoopWhile, IfStmt,
-    Block, Expr
+from lexer       import Lexer
+from token_defs  import Token
+from ast         import (
+    Program, VarDecl, Assignment,
+    WriteStmt, LoopFor, LoopWhile,
+    IfStmt, Block, Expr
 )
 
 class Parser:
@@ -27,7 +27,7 @@ class Parser:
     def parse(self):
         stmts = []
         while self.cur.type != 'EOF':
-            # skip blank lines and indent tokens at top‑level
+            # skip top‐level newlines and indents
             if self.cur.type in ('NEWLINE', 'INDENT'):
                 self.advance()
                 continue
@@ -35,6 +35,18 @@ class Parser:
         return Program(stmts)
 
     def parse_stmt(self):
+        # 0) Assignment: <identifier> = <expr>
+        if self.cur.type == 'IDENTIFIER':
+            nxt = self.tokens[self.pos+1] if self.pos+1 < len(self.tokens) else None
+            if nxt and nxt.type=='OPERATOR' and nxt.value=='=':
+                name = self.cur.value
+                self.advance()      # consume identifier
+                self.advance()      # consume '='
+                expr = self.parse_expr()
+                if self.cur.type == 'NEWLINE':
+                    self.advance()
+                return Assignment(name, expr)
+
         # 1) Variable declaration: cvar or ivar
         if self.cur.type == 'KEYWORD' and self.cur.value in ('cvar', 'ivar'):
             kind = self.cur.value
@@ -60,7 +72,7 @@ class Parser:
                 self.advance()
             return WriteStmt(args, is_fwrite=is_f)
 
-        # 3) loop (for / while)
+        # 3) loop (while / for)
         if self.cur.type == 'IDENTIFIER' and self.cur.value == 'loop':
             self.advance()
             # while-loop
@@ -70,12 +82,16 @@ class Parser:
                 self.eat('OPERATOR', '->')
                 blk = self.parse_block()
                 return LoopWhile(cond, blk)
+
             # for-loop
             var = self.cur.value
             self.eat('IDENTIFIER')
             self.eat('KEYWORD', 'for')
             count = self.parse_expr()
-            # strip optional 'times'
+            # strip any trailing " times" from the Expr value:
+            if isinstance(count, Expr) and count.value.endswith(' times'):
+                count = Expr(count.value[:-6].strip())
+            # also skip a standalone 'times' token if it's next
             if self.cur.type == 'IDENTIFIER' and self.cur.value == 'times':
                 self.advance()
             self.eat('OPERATOR', '->')
@@ -104,7 +120,6 @@ class Parser:
 
     def parse_expr(self):
         tokens = []
-        # stop on newline, EOF, comma, closing paren/brace, or '->'
         stop_types = ('NEWLINE', 'EOF')
         stop_punc  = (',', ')', '{', '}')
         while self.cur.type not in stop_types \
@@ -115,16 +130,16 @@ class Parser:
         return Expr(' '.join(tokens))
 
     def parse_block(self):
-        # Single-statement block
+        # single-statement block without braces
         if not (self.cur.type == 'PUNCTUATION' and self.cur.value == '{'):
             stmt = self.parse_stmt()
             return Block([stmt])
 
-        # Braced block
+        # braced block
         self.eat('PUNCTUATION', '{')
         stmts = []
         while not (self.cur.type == 'PUNCTUATION' and self.cur.value == '}'):
-            # skip empty lines and indent tokens inside braces
+            # skip newlines/indents inside braces
             if self.cur.type in ('NEWLINE', 'INDENT'):
                 self.advance()
                 continue
