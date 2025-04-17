@@ -1,20 +1,25 @@
 # main.py
 
 from parser import Parser
+from semantic import SemanticAnalyzer
 
 if __name__ == '__main__':
     code = '''
-# this is a comment
+# semantic test
 cvar age = 25
-fwrite("Hello, World!", age)
-loop i for 3 times -> {
-    write(i)
-}
-if age > 20 -> {
-    write("Age is over 20")
-}
+ivar name = "Alice"      # ← ivar is now initialized, so semantic check will pass
 '''
-    # Parse the source into an AST
-    tree = Parser(code).parse()
-    # Print the resulting AST
-    print(tree)
+    # 1) Parse → AST
+    try:
+        tree = Parser(code).parse()
+        print("AST =", tree)
+    except Exception as e:
+        print("❌ Syntax Error:", e)
+        exit(1)
+
+    # 2) Semantic check
+    try:
+        SemanticAnalyzer(tree).analyze()
+        print("✅ Semantic analysis passed")
+    except Exception as e:
+        print("❌ Semantic Error:", e)

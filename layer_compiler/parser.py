@@ -27,7 +27,8 @@ class Parser:
     def parse(self):
         stmts = []
         while self.cur.type != 'EOF':
-            if self.cur.type == 'NEWLINE':
+            # skip blank lines and indent tokens at top‑level
+            if self.cur.type in ('NEWLINE', 'INDENT'):
                 self.advance()
                 continue
             stmts.append(self.parse_stmt())
@@ -62,29 +63,26 @@ class Parser:
         # 3) loop (for / while)
         if self.cur.type == 'IDENTIFIER' and self.cur.value == 'loop':
             self.advance()
-            # while
+            # while-loop
             if self.cur.type == 'KEYWORD' and self.cur.value == 'while':
                 self.advance()
                 cond = self.parse_expr()
                 self.eat('OPERATOR', '->')
                 blk = self.parse_block()
                 return LoopWhile(cond, blk)
-            # for
+            # for-loop
             var = self.cur.value
             self.eat('IDENTIFIER')
             self.eat('KEYWORD', 'for')
             count = self.parse_expr()
-            # skip optional 'times'
+            # strip optional 'times'
             if self.cur.type == 'IDENTIFIER' and self.cur.value == 'times':
                 self.advance()
-            # strip 'times' if in expr value
-            if isinstance(count, Expr) and count.value.endswith(' times'):
-                count = Expr(count.value[:-6].strip())
             self.eat('OPERATOR', '->')
             blk = self.parse_block()
             return LoopFor(var, count, blk)
 
-        # 4) if statement
+        # 4) if-statement
         if self.cur.type == 'KEYWORD' and self.cur.value == 'if':
             self.advance()
             cond = self.parse_expr()
@@ -105,34 +103,33 @@ class Parser:
         return args
 
     def parse_expr(self):
-        # collect tokens until we hit a delimiter (newline, EOF, comma, closing paren/brace, or arrow)
         tokens = []
+        # stop on newline, EOF, comma, closing paren/brace, or '->'
         stop_types = ('NEWLINE', 'EOF')
-        stop_punc = (',', ')', '{', '}')
+        stop_punc  = (',', ')', '{', '}')
         while self.cur.type not in stop_types \
-          and not (self.cur.type == 'PUNCTUATION' and self.cur.value in stop_punc) \
-          and not (self.cur.type == 'OPERATOR' and self.cur.value == '->'):
+          and not (self.cur.type=='PUNCTUATION' and self.cur.value in stop_punc) \
+          and not (self.cur.type=='OPERATOR' and self.cur.value=='->'):
             tokens.append(self.cur.value)
             self.advance()
         return Expr(' '.join(tokens))
 
     def parse_block(self):
-        # 1) Single-statement block (no braces)
+        # Single-statement block
         if not (self.cur.type == 'PUNCTUATION' and self.cur.value == '{'):
             stmt = self.parse_stmt()
             return Block([stmt])
 
-        # 2) Braced block
+        # Braced block
         self.eat('PUNCTUATION', '{')
         stmts = []
         while not (self.cur.type == 'PUNCTUATION' and self.cur.value == '}'):
-            # skip indentation and blank lines inside braces
+            # skip empty lines and indent tokens inside braces
             if self.cur.type in ('NEWLINE', 'INDENT'):
                 self.advance()
                 continue
             stmts.append(self.parse_stmt())
         self.eat('PUNCTUATION', '}')
-        # consume trailing newline if present
         if self.cur.type == 'NEWLINE':
             self.advance()
         return Block(stmts)
