@@ -1,6 +1,0 @@
-# This is a comment
-cvar x = 10
-ivar y = 20
-write("Hello, Layer!")
-if x < y -> write("x is smaller")
-loop i for 5 times -> write(i)
