@@ -1,0 +1,3 @@
+cvar x = 3.5 * 2
+cvar y = 2 ^ 3 * 4 + 1   # ^ is power
+write("x =", x, ", y =", y)

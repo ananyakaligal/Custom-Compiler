@@ -1,0 +1,5 @@
+cvar a = true
+cvar b = false
+write("a and b =", a and b)
+write("a or b  =", a or b)
+write("not a   =", not a)

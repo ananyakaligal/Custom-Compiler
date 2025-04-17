@@ -1,0 +1,7 @@
+cvar count = 0
+loop i for 3 times -> {
+    loop j for 2 times -> {
+        count = count + 1
+    }
+}
+write("Total iterations:", count)

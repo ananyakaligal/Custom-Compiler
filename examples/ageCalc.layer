@@ -1,0 +1,11 @@
+# example.layer
+
+cvar age = 10
+write("Initial age:", age)
+
+loop i for 3 times -> {
+    age = age + 5
+    write("After iteration", i, "age is", age)
+}
+
+if age > 20 -> write("Done! final age =", age)

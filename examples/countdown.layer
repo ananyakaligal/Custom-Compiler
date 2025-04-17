@@ -1,0 +1,6 @@
+cvar n = 5
+loop while n > 0 -> {
+    write(n)
+    n = n - 1
+}
+write("Blast off!")
