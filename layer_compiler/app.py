@@ -2,6 +2,7 @@ import streamlit as st
 import os, sys
 from io import StringIO
 import pandas as pd
+from treeviz import visualize_ast
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
