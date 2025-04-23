@@ -1,2 +1,2 @@
-cvar s = "Hello" + " " + "Layer"
+cvar s = "Hello Layer"
 write(s)
