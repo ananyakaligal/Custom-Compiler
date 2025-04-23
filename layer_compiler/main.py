@@ -10,6 +10,7 @@ from lexer       import Lexer
 from parser      import Parser
 from semantic    import SemanticAnalyzer
 from codegen     import IRGenerator
+from optim       import eliminate_dead_code
 from vm          import VM
 
 def main():
@@ -71,10 +72,16 @@ def main():
         print("❌ IR Generation Error:", e)
         sys.exit(1)
 
+    # 5.1) Dead‑Code Elimination
+    print("\n🛠️ Optimized IR (dead code eliminated):")
+    opt_ir = eliminate_dead_code(ir_list)
+    for instr in opt_ir:
+        print(instr)
+
     # 6) VM Execution
     print("\n🖥️ VM Execution:")
     try:
-        VM(ir_list).run()
+        VM(opt_ir).run()
     except Exception as e:
         print("❌ VM Error:", e)
         sys.exit(1)
