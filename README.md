@@ -1,1 +1,1 @@
-Mini project for compiler design course
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ananyakaligal/Custom-Compiler)
